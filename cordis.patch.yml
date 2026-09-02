@@ -1,0 +1,10 @@
+# dsh bundle patch: inserts the office plugin into a profile's layer stack.
+- insert:
+    - id: dsh-office-reader
+      name: dsh-office-reader
+      inject: [webRuntime]
+      config:
+        # Reuse the same trusted Host/Origin authorities as the built-in Web API.
+        trustedHosts: !!js ctx.webRuntime.trustedHosts
+        # md2docx script override (default: <plugin>/lib/md2docx.py).
+        # md2docxScript: /your/path/md2docx.py

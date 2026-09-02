@@ -1,0 +1,12 @@
+{
+  "name": "dsh-office-reader",
+  "description": "DSH Office read + generate: read Word/Excel/PowerPoint into text/tables in memory (no intermediates, model on-demand); generate styled Word from Markdown (md2docx). | DSH Office 读取 + 生成：内存读取 Office 内容为文本/表格(无中间文件、模型按需用)；Markdown 生成带页码 Word。",
+  "version": "0.1.0",
+  "entry": {
+    "module": "./lib/index.js",
+    "client": "./client/client.js"
+  },
+  "dependencies": [
+    "@deepseek-ai/dsh-tools"
+  ]
+}
