@@ -79,10 +79,37 @@ normal = doc.styles["Normal"]
 normal.font.name = "Calibri"
 normal.font.size = Pt(10.5)
 normal._element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+# --- 2026-09-14 用户反馈「生成的 docx 行距被压（预览里比我自己放上去的文件紧）」---
+# 根因：python-docx 默认模板的 docDefaults 是 <w:spacing w:line="276" w:lineRule="auto"/>（≈1.15 倍），
+# 而用户自己的文件基本都是 1.5 倍（w:line="360"）。这里统一为 1.5 倍，Word 打开与预览观感一致。
+normal.paragraph_format.line_spacing = 1.5
+
+
+# --- 2026-09-12 用户要求：全篇只用黑色字体、任何底纹都不能有 ---
+normal.font.color.rgb = RGBColor(0, 0, 0)
+for _sn in ("Title", "Heading 1", "Heading 2", "Heading 3", "Heading 4",
+            "Intense Quote", "List Bullet", "List Number", "Table Grid"):
+    try:
+        _st = doc.styles[_sn]
+    except KeyError:
+        continue
+    try:
+        _st.font.color.rgb = RGBColor(0, 0, 0)
+    except Exception:
+        pass
+    try:  # 2026-09-14：标题/列表等样式同样统一 1.5 倍行距（否则仍继承 docDefaults 的 1.15 倍）
+        _st.paragraph_format.line_spacing = 1.5
+    except Exception:
+        pass
+    # 去掉该样式自带的底纹（w:shd）
+    for _el in list(_st.element.iter()):
+        if _el.tag == qn("w:shd"):
+            _el.getparent().remove(_el)
 
 
 def set_east_asia(run):
     run.font.name = "Calibri"
+    run.font.color.rgb = RGBColor(0, 0, 0)   # 2026-09-12：只用黑色
     r = run._element
     rPr = r.get_or_add_rPr()
     rf = rPr.find(qn("w:rFonts"))
@@ -121,7 +148,7 @@ def flush_table():
         return
     ncols = max(len(r) for r in table_rows)
     tbl = doc.add_table(rows=len(table_rows), cols=ncols)
-    tbl.style = "Light Grid Accent 1"
+    tbl.style = "Table Grid"   # 2026-09-12：原来 Light Grid Accent 1 带底纹/彩色框线
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
     for ri, row in enumerate(table_rows):
         for ci in range(ncols):
