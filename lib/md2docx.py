@@ -21,6 +21,7 @@ import os
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
@@ -71,14 +72,12 @@ def add_page_number(paragraph):
 
 
 doc = Document()
-doc.add_heading(os.path.splitext(os.path.basename(SRC))[0], level=0)
-
 
 # --- base styles ---
 normal = doc.styles["Normal"]
-normal.font.name = "Calibri"
+normal.font.name = "宋体"
 normal.font.size = Pt(10.5)
-normal._element.rPr.rFonts.set(qn("w:eastAsia"), "微软雅黑")
+normal._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
 # --- 2026-09-14 用户反馈「生成的 docx 行距被压（预览里比我自己放上去的文件紧）」---
 # 根因：python-docx 默认模板的 docDefaults 是 <w:spacing w:line="276" w:lineRule="auto"/>（≈1.15 倍），
 # 而用户自己的文件基本都是 1.5 倍（w:line="360"）。这里统一为 1.5 倍，Word 打开与预览观感一致。
@@ -97,6 +96,11 @@ for _sn in ("Title", "Heading 1", "Heading 2", "Heading 3", "Heading 4",
         _st.font.color.rgb = RGBColor(0, 0, 0)
     except Exception:
         pass
+    try:  # 2026-09-15 用户要求：全部报告/文件用宋体（含标题，避免继承主题 major font）
+        _st.font.name = "宋体"
+        _st.element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+    except Exception:
+        pass
     try:  # 2026-09-14：标题/列表等样式同样统一 1.5 倍行距（否则仍继承 docDefaults 的 1.15 倍）
         _st.paragraph_format.line_spacing = 1.5
     except Exception:
@@ -105,10 +109,21 @@ for _sn in ("Title", "Heading 1", "Heading 2", "Heading 3", "Heading 4",
     for _el in list(_st.element.iter()):
         if _el.tag == qn("w:shd"):
             _el.getparent().remove(_el)
+    # 2026-09-15 用户要求：报告不要页眉、标题下不要装饰线 → 去掉样式自带的段落下边框
+    for _el in list(_st.element.iter()):
+        if _el.tag == qn("w:pBdr"):
+            _el.getparent().remove(_el)
+# 清空页眉（只用页脚页码）
+try:
+    for _hp in doc.sections[0].header.paragraphs:
+        for _r in list(_hp.runs):
+            _r._element.getparent().remove(_r._element)
+except Exception:
+    pass
 
 
 def set_east_asia(run):
-    run.font.name = "Calibri"
+    run.font.name = "宋体"
     run.font.color.rgb = RGBColor(0, 0, 0)   # 2026-09-12：只用黑色
     r = run._element
     rPr = r.get_or_add_rPr()
@@ -116,23 +131,19 @@ def set_east_asia(run):
     if rf is None:
         rf = OxmlElement("w:rFonts")
         rPr.append(rf)
-    rf.set(qn("w:eastAsia"), "微软雅黑")
+    rf.set(qn("w:ascii"), "Times New Roman")     # 西文/数字：Times New Roman（宋体空格是全角）
+    rf.set(qn("w:hAnsi"), "Times New Roman")
+    rf.set(qn("w:eastAsia"), "宋体")
 
 
 def add_runs_with_bold(par, text):
-    """Add text to paragraph, honoring **bold** and *italic* markers."""
-    for tok in re.split(r"(\*\*.*?\*\*|\*.*?\*)", text):
-        if not tok:
-            continue
-        if tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
-            r = par.add_run(tok[2:-2])
-            r.bold = True
-        elif tok.startswith("*") and tok.endswith("*") and len(tok) > 2:
-            r = par.add_run(tok[1:-1])
-            r.italic = True
-        else:
-            r = par.add_run(tok)
-        set_east_asia(r)
+    """2026-09-15 用户要求：**正文一律不加粗，只有标题加粗**。
+
+    md 里的 `**…**` / `*…*` 仅作标记清理，不再转成加粗/斜体
+    （标题由 Heading 样式自带加粗；表格表头由 flush_table 单独置粗）。
+    """
+    r = par.add_run(re.sub(r"\*+", "", text))
+    set_east_asia(r)
 
 
 def add_body_paragraph(text, style=None):
@@ -201,6 +212,7 @@ while i < len(lines):
         continue
     if stripped.startswith("# "):
         h = doc.add_heading(level=1)
+        h.alignment = WD_ALIGN_PARAGRAPH.CENTER          # ★文档标题居中（用户要求）
         add_runs_with_bold(h, stripped[2:])
         i += 1
         continue
@@ -232,6 +244,57 @@ footer = doc.sections[0].footer
 fp = footer.paragraphs[0]
 fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
 add_page_number(fp)
+# 2026-09-15 用户要求：页码字体与正文一致（宋体）、居中
+for _r in fp.runs:
+    _r.font.name = "宋体"
+    _r.font.color.rgb = RGBColor(0, 0, 0)
+    _rp = _r._element.get_or_add_rPr()
+    _rp.get_or_add_rFonts().set(qn("w:eastAsia"), "宋体")
+try:
+    _fs = fp.style
+    _fs.font.name = "宋体"
+    _fs.element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+except Exception:
+    pass
+
+# --- 2026-09-15 用户要求：**所有生成文件**都必须符合 skill `doc-heading-format` ---
+# 在源头统一：正文首行缩进 2 字符、表格内容居中（水平＋垂直）、全黑字、无底纹、行距 1.5。
+# 放在这里，任何技能/任何调用 md2docx 得到的 docx 都自动合规，不依赖调用方是否记得。
+def apply_doc_format(doc):
+    for p in doc.paragraphs:
+        st = (p.style.name or "")
+        is_head = st.startswith(("Heading", "Title")) or p.alignment is not None
+        pPr = p._p.get_or_add_pPr()
+        for _shd in pPr.findall(qn("w:shd")):
+            pPr.remove(_shd)
+        for r in p.runs:
+            r.font.color.rgb = RGBColor(0, 0, 0)
+        p.paragraph_format.line_spacing = 1.5
+        p.paragraph_format.space_after = Pt(6)
+        # 只有普通正文段落才首行缩进（标题/列表项/引用不缩进）
+        if (not is_head) and p.text.strip() and st in ("Normal", ""):
+            ind = pPr.get_or_add_ind()
+            ind.set(qn("w:firstLineChars"), "200")   # 2 字符（中文习惯）
+            ind.set(qn("w:firstLine"), "420")
+    for t in doc.tables:
+        for row in t.rows:
+            for c in row.cells:
+                try:
+                    c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                except Exception:
+                    pass
+                tcPr = c._tc.get_or_add_tcPr()
+                for _shd in tcPr.findall(qn("w:shd")):
+                    tcPr.remove(_shd)
+                for p in c.paragraphs:
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER   # ★表格内容一律居中
+                    p.paragraph_format.line_spacing = 1.15
+                    p.paragraph_format.space_after = Pt(2)
+                    for r in p.runs:
+                        r.font.color.rgb = RGBColor(0, 0, 0)
+
+
+apply_doc_format(doc)
 
 doc.save(OUT)
 print("Saved:", OUT)

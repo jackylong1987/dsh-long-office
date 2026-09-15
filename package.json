@@ -1,6 +1,6 @@
 {
   "name": "dsh-office-reader",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DSH Office read + generate: read Word/Excel/PowerPoint (docx/xlsx/pptx and legacy doc/xls/ppt) into text/tables in memory (no intermediate files, model on-demand), and generate styled Word (.docx) from Markdown (md2docx moved here). | DSH 插件：Office 读取 + 生成 —— 内存读取 Word/Excel/PPT 内容为文本/表格(无中间文件、模型按需用)，并可 Markdown 生成带页码 Word。",
   "type": "module",
   "license": "MIT",
