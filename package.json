@@ -1,9 +1,29 @@
 {
   "name": "dsh-long-office",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "DSH Office read + generate: read Word/Excel/PowerPoint (docx/xlsx/pptx and legacy doc/xls) into text/tables in memory (no intermediate files, model on-demand); generate Word/Excel/PowerPoint from Markdown via md2docx / md2xlsx / md2pptx. | DSH 插件：Office 读取 + 生成 —— 内存读取 Word/Excel/PPT（含旧版 doc/xls）为文本/表格；Markdown 生成 Word/Excel/PPT（md2docx / md2xlsx / md2pptx）。",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackylong1987/dsh-long-office.git"
+  },
+  "homepage": "https://github.com/jackylong1987/dsh-long-office#readme",
+  "bugs": {
+    "url": "https://github.com/jackylong1987/dsh-long-office/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "office",
+    "docx",
+    "xlsx",
+    "pptx",
+    "md2docx",
+    "md2xlsx",
+    "md2pptx"
+  ],
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
