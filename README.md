@@ -1,6 +1,8 @@
-# dsh-office-reader
+# dsh-long-office
 
-DSH Web 插件：**Office 读取 + 生成**。读取 Word/Excel/PowerPoint（含旧版格式）为文本/表格，内存解析、不落中间文件；并从 Markdown 生成带页码的 Word（原 `dsh-long-plugins` 的 `md2docx` 迁入本插件）。
+DSH Web 插件：**Office 读取 + 生成**。读取 Word/Excel/PowerPoint（含旧版格式）为文本/表格，内存解析、不落中间文件；并从 Markdown 生成 Word / Excel / PowerPoint（`md2docx` / `md2xlsx` / `md2pptx`，原 `dsh-long-plugins` 的 `md2docx` 迁入本插件）。
+
+**工具一览**：`office_read`（读 Office）、`md2docx`（Markdown→Word）、`md2xlsx`（Markdown 表格→Excel）、`md2pptx`（Markdown 大纲→PPT，16:9/备注/图片/坐标回显）。
 
 ---
 
@@ -19,8 +21,15 @@ DSH Web 插件：**Office 读取 + 生成**。读取 Word/Excel/PowerPoint（含
 
 读取在内存中完成，**不生成任何中间文件**，模型按需调用 `office_read` 工具查看内容。
 
-### 2. 生成 Word（`md2docx`）
-把 Markdown 转为带页码的 Word，需 `python3` + `python-docx`。脚本路径可通过配置 `md2docxScript` 覆盖（默认：插件内 `lib/md2docx.py`）。
+### 2. 生成 Office 文档（Markdown → Word / Excel / PowerPoint）
+
+| 工具 | 产物 | 依赖 | 要点 |
+| --- | --- | --- | --- |
+| `md2docx` | `.docx` | `python3` + `python-docx` | 带页码；中文公文排版（宋体＋Times New Roman／1.5 倍行距／首行缩进 2 字符／表格居中／无页眉与装饰线／正文不加粗） |
+| `md2xlsx` | `.xlsx` | `python3` + `openpyxl` | 每个 Markdown 表格一个 sheet（名取上方标题）；表头加粗、细边框、内容居中、**无底纹**、列宽自适应、冻结首行；`=` 开头写成**真公式** |
+| `md2pptx` | `.pptx` | `python3` + `python-pptx` + `Pillow` | 16:9；`# `封面、`## `分页、`- `要点、`> 备注：`演讲者备注、`![说明](图 "宽x高")` 插图；生成后回显每页元素坐标 |
+
+三者默认都**不覆盖**已存在文件（工具的 `overwrite: true` 才覆盖）。脚本路径可分别用配置 `md2docxScript` / `md2xlsxScript` / `md2pptxScript` 覆盖（默认：插件内 `lib/md2docx.py`、`lib/md2xlsx.py`、`lib/md2pptx.py`）。
 
 ---
 
@@ -30,12 +39,12 @@ DSH Web 插件：**Office 读取 + 生成**。读取 Word/Excel/PowerPoint（含
 
 ```bash
 # 通过 npm 安装（未发布时用本地 file: 链接）
-dsh plugin --profile web add dsh-office-reader
+dsh plugin --profile web add dsh-long-office
 # 源码调试：
-dsh plugin --profile web add file:./dsh-office-reader
+dsh plugin --profile web add file:./dsh-long-office
 ```
 
-`cordis.patch.yml` 会把插件 `dsh-office-reader` 插入 profile 的层栈（`inject: [webRuntime]`）。
+`cordis.patch.yml` 会把插件 `dsh-long-office` 插入 profile 的层栈（`inject: [webRuntime]`）。
 
 ---
 
@@ -43,7 +52,7 @@ dsh plugin --profile web add file:./dsh-office-reader
 
 - 工具 `office_read`：读取 Office 文件 → 文本/表格。
 - 工具 `md2docx`：Markdown → Word。
-- 路由 `GET /api/dsh-office-reader/content?path=<绝对路径>`：返回 Office 文件的内存文本/表格。
+- 路由 `GET /api/dsh-long-office/content?path=<绝对路径>`：返回 Office 文件的内存文本/表格。
 
 > 说明：本插件主要提供服务端工具与路由，`client/client.js` 仅为一个占位模块（无前端 UI）。
 
@@ -55,8 +64,8 @@ dsh plugin --profile web add file:./dsh-office-reader
 
 ```yaml
 - insert:
-    - id: dsh-office-reader
-      name: dsh-office-reader
+    - id: dsh-long-office
+      name: dsh-long-office
       inject: [webRuntime]
       config:
         # 复用内建 Web API 的 Host/Origin 白名单
@@ -77,7 +86,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3080
 # 期望：200
 
 # 2) 读取一个 docx
-curl -s "http://127.0.0.1:3080/api/dsh-office-reader/content?path=/absolute/path/to/example.docx"
+curl -s "http://127.0.0.1:3080/api/dsh-long-office/content?path=/absolute/path/to/example.docx"
 # 期望：{"ok":true,"content":"..."}
 
 # 3) 工具可用（通过会话问模型）

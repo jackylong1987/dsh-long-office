@@ -1,7 +1,7 @@
 # dsh bundle patch: inserts the office plugin into a profile's layer stack.
 - insert:
-    - id: dsh-office-reader
-      name: dsh-office-reader
+    - id: dsh-long-office
+      name: dsh-long-office
       inject: [webRuntime]
       config:
         # Reuse the same trusted Host/Origin authorities as the built-in Web API.

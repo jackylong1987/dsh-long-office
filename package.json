@@ -1,7 +1,7 @@
 {
-  "name": "dsh-office-reader",
+  "name": "dsh-long-office",
   "version": "0.1.2",
-  "description": "DSH Office read + generate: read Word/Excel/PowerPoint (docx/xlsx/pptx and legacy doc/xls/ppt) into text/tables in memory (no intermediate files, model on-demand), and generate styled Word (.docx) from Markdown (md2docx moved here). | DSH 插件：Office 读取 + 生成 —— 内存读取 Word/Excel/PPT 内容为文本/表格(无中间文件、模型按需用)，并可 Markdown 生成带页码 Word。",
+  "description": "DSH Office read + generate: read Word/Excel/PowerPoint (docx/xlsx/pptx and legacy doc/xls) into text/tables in memory (no intermediate files, model on-demand); generate Word/Excel/PowerPoint from Markdown via md2docx / md2xlsx / md2pptx. | DSH 插件：Office 读取 + 生成 —— 内存读取 Word/Excel/PPT（含旧版 doc/xls）为文本/表格；Markdown 生成 Word/Excel/PPT（md2docx / md2xlsx / md2pptx）。",
   "type": "module",
   "license": "MIT",
   "main": "lib/index.js",
@@ -11,8 +11,10 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "lib",
+    "lib/index.js",
     "lib/md2docx.py",
+    "lib/md2xlsx.py",
+    "lib/md2pptx.py",
     "client",
     "cordis.patch.yml",
     "dsh.plugin.json"
