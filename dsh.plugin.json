@@ -1,7 +1,7 @@
 {
   "name": "dsh-long-office",
   "description": "DSH Office read + generate: read Word/Excel/PowerPoint (docx/xlsx/pptx and legacy doc/xls) into text/tables in memory (no intermediates, model on-demand); generate Word/Excel/PowerPoint from Markdown via md2docx / md2xlsx / md2pptx. | DSH 插件：Office 内存读取 + Markdown 生成 Office（md2docx / md2xlsx / md2pptx，排版按中文公文规范固化）。",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "entry": {
     "module": "./lib/index.js",
     "client": "./client/client.js"

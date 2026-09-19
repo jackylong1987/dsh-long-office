@@ -19,7 +19,7 @@ import sys
 import os
 
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, RGBColor, Mm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -63,15 +63,30 @@ def add_page_number(paragraph):
     t.text = "1"
     end = OxmlElement("w:fldChar")
     end.set(qn("w:fldCharType"), "end")
-    r = paragraph.add_run()
-    set_east_asia(r)
-    for el in (fld, instr, sep, t, end):
-        r._r.append(el)
-    run2 = paragraph.add_run(" 页")
-    set_east_asia(run2)
+    # 2026-09-20 修：**域字符与缓存结果必须分在不同 run**。
+    # 浏览器的 docx 预览器（docx-preview）会把"含 fldChar/instrText 的整个 run"丢掉；
+    # 若缓存数字与域字符同 run，数字会一起消失 → 预览里页码位置错乱（表现为「第 1页」）。
+    # 拆开后：域 run 被丢，数字 run 保留，页码位置永远正确。
+    def _run(text=None):
+        rr = paragraph.add_run() if text is None else paragraph.add_run(text)
+        set_east_asia(rr)
+        return rr
+    _run()._r.append(fld)
+    _run()._r.append(instr)
+    _run()._r.append(sep)
+    _run("1")
+    _run()._r.append(end)
+    _run(" 页")
 
 
 doc = Document()
+# ── 纸张：A4（210×297mm）────────────────────────────────────────────
+# python-docx 的默认模板是 US Letter（215.9×279.4mm），中文公文/专利文件必须 A4；
+# 2026-09-20 修：此前所有由本脚本生成的 docx 都是 Letter（页数与版式会与 Word/A4 不一致）。
+for _sec in doc.sections:
+    _sec.page_width = Mm(210)
+    _sec.page_height = Mm(297)
+
 
 # --- base styles ---
 normal = doc.styles["Normal"]
