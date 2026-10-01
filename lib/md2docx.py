@@ -7,7 +7,7 @@ Usage:
 
 If output.docx is omitted, it defaults to <input-name>.docx next to the input.
 
-Renders headings (h1-h3), bold/italic inline, tables (pipe syntax),
+Renders headings (h1-h4), bold/italic inline, tables (pipe syntax),
 ordered/unordered lists, blockquotes, and horizontal rules. Adds a centered
 footer with an auto-updating PAGE field (updates when opened in Word or
 exported to PDF).
@@ -102,6 +102,7 @@ normal.paragraph_format.line_spacing = 1.5
 # --- 2026-09-12 用户要求：全篇只用黑色字体、任何底纹都不能有 ---
 normal.font.color.rgb = RGBColor(0, 0, 0)
 for _sn in ("Title", "Heading 1", "Heading 2", "Heading 3", "Heading 4",
+            "Heading 5", "Heading 6",
             "Intense Quote", "List Bullet", "List Number", "Table Grid"):
     try:
         _st = doc.styles[_sn]
@@ -114,6 +115,7 @@ for _sn in ("Title", "Heading 1", "Heading 2", "Heading 3", "Heading 4",
     try:  # 2026-09-15 用户要求：全部报告/文件用宋体（含标题，避免继承主题 major font）
         _st.font.name = "宋体"
         _st.element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+        _st.font.italic = False   # 2026-10-01：Word 默认 Heading 4 带斜体，与"只用加粗不用斜体"不符，清掉
     except Exception:
         pass
     try:  # 2026-09-14：标题/列表等样式同样统一 1.5 倍行距（否则仍继承 docDefaults 的 1.15 倍）
@@ -215,6 +217,21 @@ while i < len(lines):
         continue
     if in_table:
         flush_table()
+    if stripped.startswith("#### "):
+        h = doc.add_heading(level=4)   # 2026-10-01：补第四层（规范体系 A 的"1."）
+        add_runs_with_bold(h, stripped[5:])
+        i += 1
+        continue
+    if stripped.startswith("##### "):
+        h = doc.add_heading(level=5)   # 2026-10-01：Markdown 标题有 6 级，按真实层级走，不收敛
+        add_runs_with_bold(h, stripped[6:])
+        i += 1
+        continue
+    if stripped.startswith("###### "):
+        h = doc.add_heading(level=6)
+        add_runs_with_bold(h, stripped[7:])
+        i += 1
+        continue
     if stripped.startswith("### "):
         h = doc.add_heading(level=3)
         add_runs_with_bold(h, stripped[4:])
